@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Park Place — Item Build-Up Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --border: #252b3b;
+    --accent: #c8f060;
+    --accent2: #60d4f0;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --warn: #f0b060;
+    --red: #f06060;
+    --labour: #60d4f0;
+    --plant: #c8f060;
+    --material: #f0b060;
+    --subcon: #b060f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: linear-gradient(180deg, #141829 0%, var(--bg) 100%);
+  }
+  .header-left h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 2rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .header-left h1 span { color: var(--accent); }
+  .header-left p {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .total-pill {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 10px 20px;
+    text-align: right;
+  }
+  .total-pill .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .total-pill .value { font-size: 1.5rem; color: var(--accent); font-weight: 500; }
+
+  /* CONTROLS */
+  .controls {
+    padding: 20px 40px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .search-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    width: 240px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 14px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(200,240,96,0.06);
+  }
+  .oncost-control {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .oncost-control label { text-transform: uppercase; letter-spacing: 0.08em; }
+  .oncost-control input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    width: 70px;
+    outline: none;
+  }
+  .oncost-control input:focus { border-color: var(--accent); }
+
+  /* SUMMARY CARDS */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-card {
+    background: var(--bg);
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .summary-card:hover { background: var(--surface); }
+  .summary-card .cat-label {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .summary-card .cat-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  .summary-card .cat-count {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* MAIN TABLE */
+  .table-wrap {
+    padding: 24px 40px 60px;
+  }
+  .section-header {
+    display: grid;
+    grid-template-columns: 60px 1fr 80px 100px 100px 100px 100px 120px 40px;
+    gap: 8px;
+    padding: 10px 14px;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+    position: sticky;
+    top: 61px;
+    background: var(--bg);
+    z-index: 50;
+  }
+
+  .section-group { margin-bottom: 24px; }
+  .section-group-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 14px 14px 6px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-group-title .group-total {
+    margin-left: auto;
+    color: var(--text);
+    font-size: 0.78rem;
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 80px 100px 100px 100px 100px 120px 40px;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 3px;
+    transition: background 0.12s;
+    cursor: pointer;
+    align-items: start;
+    margin-bottom: 2px;
+  }
+  .item-row:hover { background: var(--surface); }
+  .item-row.provisional { opacity: 0.7; }
+  .item-row .ref {
+    font-size: 0.72rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .item-row .desc {
+    font-size: 0.74rem;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .item-row .desc .sub {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .item-row .qty {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  .item-row .rate, .item-row .nett, .item-row .gross {
+    font-size: 0.72rem;
+    text-align: right;
+  }
+  .item-row .nett { color: var(--text); }
+  .item-row .gross { color: var(--accent); font-weight: 500; }
+  .item-row .bar-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 3px;
+  }
+  .mini-bar {
+    height: 4px;
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* EXPAND PANEL */
+  .expand-panel {
+    display: none;
+    background: var(--surface);
+    border-left: 2px solid var(--accent);
+    margin: 0 0 6px 74px;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 18px;
+    font-size: 0.72rem;
+  }
+  .expand-panel.open { display: block; }
+  .breakdown-table { width: 100%; border-collapse: collapse; }
+  .breakdown-table th {
+    text-align: left;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .breakdown-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid rgba(37,43,59,0.5);
+    font-size: 0.7rem;
+    color: var(--text);
+  }
+  .breakdown-table td.type-L { color: var(--labour); }
+  .breakdown-table td.type-P { color: var(--plant); }
+  .breakdown-table td.type-M { color: var(--material); }
+  .breakdown-table td.type-S { color: var(--subcon); }
+  .breakdown-footer {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .breakdown-footer .bf-item {
+    font-size: 0.68rem;
+  }
+  .breakdown-footer .bf-item .bf-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px; }
+  .breakdown-footer .bf-item .bf-val { font-weight: 500; }
+
+  /* PROVISIONAL BADGE */
+  .badge {
+    display: inline-block;
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge.prov { background: rgba(240,176,96,0.15); color: var(--warn); border: 1px solid rgba(240,176,96,0.3); }
+  .badge.bo { background: rgba(96,212,240,0.1); color: var(--accent2); border: 1px solid rgba(96,212,240,0.3); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    padding: 0 40px 0;
+    font-size: 0.63rem;
+    color: var(--muted);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+
+  /* NO RESULTS */
+  .no-results {
+    padding: 60px 40px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  /* QTY EDIT */
+  .qty-edit {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    width: 70px;
+    text-align: right;
+    outline: none;
+    padding: 0 0 1px;
+  }
+  .qty-edit:focus { border-bottom-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Park <span>Place</span></h1>
+    <p>Maylim Ltd · Item Build-Up Dashboard · IRE200</p>
+  </div>
+  <div class="total-pill">
+    <div class="label">Nett Total</div>
+    <div class="value" id="grand-nett">£693,094</div>
+    <div class="label" style="margin-top:4px">Gross (inc. oncosts)</div>
+    <div class="value" id="grand-gross" style="font-size:1.1rem; color: var(--accent)">—</div>
+  </div>
+</header>
+
+<div class="controls">
+  <input class="search-box" type="text" id="search" placeholder="Search items...">
+  <button class="filter-btn active" data-cat="ALL">All</button>
+  <button class="filter-btn" data-cat="DEMOLITION">Demo</button>
+  <button class="filter-btn" data-cat="PLANTERS">Planters</button>
+  <button class="filter-btn" data-cat="TIMBER">Timber</button>
+  <button class="filter-btn" data-cat="PAVING">Paving</button>
+  <button class="filter-btn" data-cat="CLAY">Clay Pots</button>
+  <button class="filter-btn" data-cat="DRAINAGE">Drainage</button>
+  <button class="filter-btn" data-cat="ELECTRICAL">Electrical</button>
+  <div class="oncost-control">
+    <label>Oncost %</label>
+    <input type="number" id="oncost" value="10.5" step="0.5" min="0" max="50">
+  </div>
+</div>
+
+<div class="summary-grid" id="summary-grid"></div>
+
+<div class="table-wrap">
+  <div class="legend" style="margin-bottom:16px">
+    <span><span class="legend-dot" style="background:var(--labour)"></span>Labour</span>
+    <span><span class="legend-dot" style="background:var(--plant)"></span>Plant</span>
+    <span><span class="legend-dot" style="background:var(--material)"></span>Material</span>
+    <span><span class="legend-dot" style="background:var(--subcon)"></span>Subcon/Other</span>
+    <span style="margin-left:8px"><span class="badge prov">prov</span> Provisional</span>
+    <span><span class="badge bo">by others</span></span>
+  </div>
+
+  <div class="section-header">
+    <span>Ref</span>
+    <span>Description</span>
+    <span style="text-align:right">Qty</span>
+    <span style="text-align:right">Unit Rate</span>
+    <span style="text-align:right">Nett Total</span>
+    <span style="text-align:right">Gross Total</span>
+    <span style="text-align:right">GW Output/Day</span>
+    <span>Breakdown</span>
+    <span></span>
+  </div>
+
+  <div id="items-container"></div>
+</div>
+
+<script>
+const ONCOST_DEFAULT = 10.5;
+
+// ───────────────────────────────────────────────
+// DATA
+// ───────────────────────────────────────────────
+const items = [
+  // ── DEMOLITION & ALTERATIONS
+  { ref:'A', cat:'DEMOLITION', desc:'Saw cut existing paving — curved to suit planter layout', qty:288, unit:'m', rate:26.46, provisional:false,
+    resources:[
+      {name:'General Labour', type:'L', qty:0.325, unit:'hr', rate:33, up:10.73},
+      {name:'Groundworker', type:'L', qty:0.325, unit:'hr', rate:33, up:10.73},
+      {name:'Diamond Saw Cutter', type:'P', qty:0.325, unit:'hr', rate:6, up:1.95},
+      {name:'Diamond Saw Blade', type:'M', qty:0.003, unit:'nr', rate:180, up:0.54},
+    ]},
+  { ref:'B', cat:'DEMOLITION', desc:'Carefully remove paving and set aside for reuse; dispose of broken/unwanted', qty:309, unit:'m2', rate:16.25, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.15, unit:'hr', rate:33, up:4.95},
+      {name:'General Labour', type:'L', qty:0.15, unit:'hr', rate:33, up:4.95},
+      {name:'Small Tools', type:'P', qty:0.15, unit:'hr', rate:5, up:0.75},
+      {name:'Pallets', type:'M', qty:0.025, unit:'£', rate:18, up:0.45},
+      {name:'Skip 6m³', type:'P', qty:0.01, unit:'no', rate:360, up:3.60},
+    ]},
+  { ref:'C', cat:'DEMOLITION', desc:'Carefully remove cladding to upstand; set aside for reuse; dispose of unwanted', qty:51, unit:'m2', rate:35.47, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.30, unit:'hr', rate:33, up:9.90},
+      {name:'General Labour', type:'L', qty:0.30, unit:'hr', rate:33, up:9.90},
+      {name:'Small Tools', type:'P', qty:0.30, unit:'hr', rate:5, up:1.50},
+      {name:'Pallets', type:'M', qty:0.30, unit:'£', rate:18, up:5.40},
+      {name:'Skip 6m³', type:'P', qty:0.015, unit:'no', rate:360, up:5.40},
+    ]},
+  { ref:'D', cat:'DEMOLITION', desc:'Carefully remove coping and benches to upstand; set aside for reuse; dispose of unwanted', qty:51, unit:'m2', rate:35.47, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.30, unit:'hr', rate:33, up:9.90},
+      {name:'General Labour', type:'L', qty:0.30, unit:'hr', rate:33, up:9.90},
+      {name:'Small Tools', type:'P', qty:0.30, unit:'hr', rate:5, up:1.50},
+      {name:'Pallets', type:'M', qty:0.30, unit:'£', rate:18, up:5.40},
+      {name:'Skip 6m³', type:'P', qty:0.015, unit:'no', rate:360, up:5.40},
+    ]},
+  { ref:'E', cat:'DEMOLITION', desc:'Carefully remove access control pedestal; store on site for future re-use', qty:1, unit:'item', rate:78.46, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+    ]},
+  { ref:'F', cat:'DEMOLITION', desc:'Carefully remove existing planters on vent shaft; store on site for future re-use', qty:1, unit:'item', rate:313.82, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'General Labour', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'Small Tools', type:'P', qty:4.0, unit:'hr', rate:5, up:20.00},
+    ]},
+  { ref:'G', cat:'DEMOLITION', desc:'Carefully remove lighting bollards along facade; incl. all electrical disconnection/isolation', qty:6, unit:'nr', rate:204.98, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.5, unit:'hr', rate:33, up:16.50},
+      {name:'General Labour', type:'L', qty:0.5, unit:'hr', rate:33, up:16.50},
+      {name:'Small Tools', type:'P', qty:0.5, unit:'hr', rate:5, up:2.50},
+      {name:'MDN Cover Rate', type:'S', qty:150, unit:'£', rate:1, up:150.00},
+    ]},
+  { ref:'H', cat:'DEMOLITION', desc:'Carefully remove any other fixtures & fittings required to complete works', qty:1, unit:'item', rate:711.62, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'General Labour', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'Small Tools', type:'P', qty:4.0, unit:'hr', rate:5, up:20.00},
+      {name:'Skip 6m³', type:'P', qty:1.0, unit:'no', rate:360, up:360.00},
+    ]},
+
+  // ── PLANTERS
+  { ref:'I', cat:'PLANTERS', desc:'Planter edge; 425mm curved; 3mm thick; standard height (incl. roll top)', qty:184, unit:'m', rate:525.48, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:388.5, unit:'m', rate:1, up:388.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'I*', cat:'PLANTERS', desc:'Planter edge; 700mm curved; 3mm thick; standard height (incl. roll top) — PROVISIONAL', qty:13, unit:'m', rate:618.30, provisional:true,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:472.5, unit:'m', rate:1, up:472.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'J', cat:'PLANTERS', desc:'Planter edge; 425mm straight; 3mm thick; standard height (incl. roll top)', qty:93, unit:'m', rate:370.55, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'General Labour', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'Small Tools', type:'P', qty:0.8, unit:'hr', rate:5, up:4.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:262.5, unit:'m', rate:1, up:262.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'K', cat:'PLANTERS', desc:'Planter edge; 425mm straight; 3mm thick; at climber planter', qty:29, unit:'m', rate:370.55, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'General Labour', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'Small Tools', type:'P', qty:0.8, unit:'hr', rate:5, up:4.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:262.5, unit:'m', rate:1, up:262.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'L', cat:'PLANTERS', desc:'Planter edge; 325mm straight; 3mm thick; street planter — One Park Place', qty:31, unit:'m', rate:300.94, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'General Labour', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'Small Tools', type:'P', qty:0.8, unit:'hr', rate:5, up:4.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:199.5, unit:'m', rate:1, up:199.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'M', cat:'PLANTERS', desc:'Planter edge; 325mm straight; 3mm thick; street planter — Two Park Place', qty:19, unit:'m', rate:300.94, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'General Labour', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'Small Tools', type:'P', qty:0.8, unit:'hr', rate:5, up:4.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:199.5, unit:'m', rate:1, up:199.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'N', cat:'PLANTERS', desc:'Planter edge; 325mm straight; 3mm thick; street planter — Three Park Place', qty:32, unit:'m', rate:300.94, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'General Labour', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'Small Tools', type:'P', qty:0.8, unit:'hr', rate:5, up:4.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:199.5, unit:'m', rate:1, up:199.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'O', cat:'PLANTERS', desc:'Planter edge; 425mm curved; against concrete upstand; Front loc (detail 1.04A)', qty:15, unit:'m', rate:676.31, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:525.0, unit:'m', rate:1, up:525.00},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'P', cat:'PLANTERS', desc:'Planter edge; 690mm straight; against concrete upstand; stepped planters (detail 1.03A)', qty:14, unit:'m', rate:751.73, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:593.25, unit:'m', rate:1, up:593.25},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'Q', cat:'PLANTERS', desc:'Planter edge; 270mm straight; against concrete upstand; planter on top of upstand (detail 1.04A)', qty:47, unit:'m', rate:293.43, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:178.5, unit:'m', rate:1, up:178.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'R', cat:'PLANTERS', desc:'Planter edges; horizontal edge underneath planter; top of upstand; against concrete upstand (detail 1.04A)', qty:11, unit:'m2', rate:536.21, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Kent Planter', type:'M', qty:404.25, unit:'m', rate:1, up:404.25},
+      {name:'Fixing Allowance', type:'M', qty:1.0, unit:'m', rate:10, up:10.00},
+    ]},
+  { ref:'S', cat:'PLANTERS', desc:'Planter edge; 425mm straight; against concrete upstand; at gate to courtyard area', qty:10, unit:'m', rate:386.25, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:262.5, unit:'m', rate:1, up:262.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'T', cat:'PLANTERS', desc:'Planter edge; 425mm straight; against concrete upstand; at gate to courtyard area', qty:7, unit:'m', rate:386.25, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0368, unit:'m3', rate:300, up:11.04},
+      {name:'Kent Planter', type:'M', qty:262.5, unit:'m', rate:1, up:262.50},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'T2', cat:'PLANTERS', desc:'Mastic to base of planter as per drawing 830-TLA-ZZ-ZZ-DR-L-9102', qty:288, unit:'m', rate:8.84, provisional:false,
+    resources:[
+      {name:'Mastic Allowance', type:'M', qty:8.0, unit:'£', rate:1, up:8.00},
+    ]},
+
+  // ── TIMBER FURNITURE
+  { ref:'U', cat:'TIMBER', desc:'Bespoke curved bench — Type 1; 2200mm L × 400mm W × 400mm H; backrest 370mm', qty:14, unit:'nr', rate:5589.37, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:3.0, unit:'hr', rate:33, up:99.00},
+      {name:'General Labour', type:'L', qty:3.0, unit:'hr', rate:33, up:99.00},
+      {name:'Small Tools', type:'P', qty:3.0, unit:'hr', rate:5, up:15.00},
+      {name:'Bench Seating', type:'M', qty:2.31, unit:'m', rate:2075, up:4793.25},
+      {name:'Fixing Allowance', type:'M', qty:2.2, unit:'m', rate:10, up:22.00},
+      {name:'Maylim Accommodation', type:'S', qty:30, unit:'£', rate:1, up:30.00},
+    ]},
+  { ref:'V', cat:'TIMBER', desc:'Bespoke curved bench — Type 2; 4500mm L × 676mm W × 400mm H; backrest 370mm', qty:1, unit:'nr', rate:11252.63, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'General Labour', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'Small Tools', type:'P', qty:4.0, unit:'hr', rate:5, up:20.00},
+      {name:'Bench Seating', type:'M', qty:4.725, unit:'m', rate:2075, up:9804.38},
+      {name:'Fixing Allowance', type:'M', qty:4.5, unit:'m', rate:10, up:45.00},
+      {name:'Maylim Accommodation', type:'S', qty:50, unit:'£', rate:1, up:50.00},
+    ]},
+  { ref:'W', cat:'TIMBER', desc:'Bespoke curved bench — Type 3; 3000mm L × 676mm W × 400mm H; backrest 370mm', qty:1, unit:'nr', rate:7545.23, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:3.0, unit:'hr', rate:33, up:99.00},
+      {name:'General Labour', type:'L', qty:3.0, unit:'hr', rate:33, up:99.00},
+      {name:'Small Tools', type:'P', qty:3.0, unit:'hr', rate:5, up:15.00},
+      {name:'Bench Seating', type:'M', qty:3.15, unit:'m', rate:2075, up:6536.25},
+      {name:'Fixing Allowance', type:'M', qty:3.0, unit:'m', rate:10, up:30.00},
+      {name:'Maylim Accommodation', type:'S', qty:49, unit:'£', rate:1, up:49.00},
+    ]},
+  { ref:'X', cat:'TIMBER', desc:'Bespoke curved bench — Type 4; 4200mm L × 676mm W × 400mm H; backrest 370mm', qty:1, unit:'nr', rate:10527.06, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'General Labour', type:'L', qty:4.0, unit:'hr', rate:33, up:132.00},
+      {name:'Small Tools', type:'P', qty:4.0, unit:'hr', rate:5, up:20.00},
+      {name:'Bench Seating', type:'M', qty:4.41, unit:'m', rate:2075, up:9150.75},
+      {name:'Fixing Allowance', type:'M', qty:4.2, unit:'m', rate:10, up:42.00},
+      {name:'Maylim Accommodation', type:'S', qty:50, unit:'£', rate:1, up:50.00},
+    ]},
+  { ref:'Y', cat:'TIMBER', desc:'Bespoke curved bench — Type 5; 5900mm L × 400mm W × 400mm H; backrest 370mm', qty:1, unit:'nr', rate:14717.09, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:5.0, unit:'hr', rate:33, up:165.00},
+      {name:'General Labour', type:'L', qty:5.0, unit:'hr', rate:33, up:165.00},
+      {name:'Small Tools', type:'P', qty:5.0, unit:'hr', rate:5, up:25.00},
+      {name:'Bench Seating', type:'M', qty:6.195, unit:'m', rate:2075, up:12854.63},
+      {name:'Fixing Allowance', type:'M', qty:5.9, unit:'m', rate:10, up:59.00},
+      {name:'Maylim Accommodation', type:'S', qty:50, unit:'£', rate:1, up:50.00},
+    ]},
+  { ref:'Z', cat:'TIMBER', desc:'Integrated circular table; Ø320mm × 660mm H; Kebony Clear timber by Kent Stainless', qty:14, unit:'nr', rate:882.07, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'General Labour', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'Small Tools', type:'P', qty:2.0, unit:'hr', rate:5, up:10.00},
+      {name:'Circular Table', type:'M', qty:656.25, unit:'nr', rate:1, up:656.25},
+    ]},
+  { ref:'AA', cat:'TIMBER', desc:'Moveable circular table; Ø840mm × 700mm H; Kebony Clear timber — PROVISIONAL', qty:4, unit:'nr', rate:1074.06, provisional:true,
+    resources:[
+      {name:'Groundworker', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'General Labour', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'Circular Table', type:'M', qty:840.0, unit:'nr', rate:1, up:840.00},
+    ]},
+
+  // ── PAVING
+  { ref:'AB', cat:'PAVING', desc:'Paving; 50mm thick; existing paving re-laid to falls; incl. Kilsaran HSBC bedding & jointing — PROVISIONAL', qty:0, unit:'m2', rate:136.84, provisional:true,
+    resources:[
+      {name:'Steintech Bedding Mortar', type:'M', qty:0.042, unit:'m3', rate:535, up:22.47},
+      {name:'Steintech Jointing Mortar', type:'M', qty:0.0053, unit:'m3', rate:1550, up:8.22},
+      {name:'Steintech Mortar Slurry', type:'M', qty:1.05, unit:'m2', rate:3, up:3.15},
+      {name:'Paving Install', type:'S', qty:90, unit:'£', rate:1, up:90.00},
+    ]},
+  { ref:'AC', cat:'PAVING', desc:'Paving; 600×600×50mm; to match existing; incl. Kilsaran HSBC bedding & jointing — PROVISIONAL', qty:0, unit:'m2', rate:189.93, provisional:true,
+    resources:[
+      {name:'Paving Allowance', type:'M', qty:1.05, unit:'m2', rate:60, up:63.00},
+      {name:'Steintech Bedding Mortar', type:'M', qty:0.042, unit:'m3', rate:535, up:22.47},
+      {name:'Steintech Jointing Mortar', type:'M', qty:0.0021, unit:'m3', rate:1550, up:3.26},
+      {name:'Steintech Mortar Slurry', type:'M', qty:1.05, unit:'m2', rate:3, up:3.15},
+      {name:'Paving Install', type:'S', qty:80, unit:'£', rate:1, up:80.00},
+    ]},
+
+  // ── CLAY POTS
+  { ref:'AD', cat:'CLAY', desc:'Moveable Pot — Brann 002; Ø420mm top × 1150mm H × Ø320mm base', qty:18, unit:'nr', rate:1097.43, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Clay Pots', type:'M', qty:927.15, unit:'nr', rate:1, up:927.15},
+    ]},
+  { ref:'AD2', cat:'CLAY', desc:'Moveable Pot — Emer 002; Ø600mm top × 720mm H × Ø350mm base', qty:21, unit:'nr', rate:1033.62, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Clay Pots', type:'M', qty:869.40, unit:'nr', rate:1, up:869.40},
+    ]},
+  { ref:'AE', cat:'CLAY', desc:'Moveable Pot — Caradoc 003; Ø1000mm top × 900mm H × Ø450mm base', qty:24, unit:'nr', rate:1390.97, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Clay Pots', type:'M', qty:1192.80, unit:'nr', rate:1, up:1192.80},
+    ]},
+  { ref:'AE2', cat:'CLAY', desc:'Delivery allowance — awaiting costs; PROVISIONAL SUM', qty:1, unit:'item', rate:10000, provisional:true,
+    resources:[
+      {name:'Provisional Sum', type:'S', qty:10000, unit:'£', rate:1, up:10000},
+    ]},
+
+  // ── DRAINAGE (below ground)
+  { ref:'AF', cat:'DRAINAGE', desc:'uPVC pipe; 100mm dia; fixed to basement soffit; per engineers detail', qty:113, unit:'m', rate:141.45, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'110mm uPVC Pipe', type:'M', qty:1.05, unit:'m', rate:16, up:16.80},
+      {name:'Clip/Fixing Units', type:'M', qty:1.05, unit:'nr', rate:18, up:18.90},
+      {name:'Resin Fixing', type:'M', qty:0.0011, unit:'m3', rate:3000, up:3.30},
+      {name:'Access Allowance', type:'S', qty:1.0, unit:'m', rate:13, up:13.00},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'AG', cat:'DRAINAGE', desc:'Extra over; 110mm uPVC connections', qty:13, unit:'nr', rate:238.57, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+      {name:'110mm uPVC Connectors', type:'M', qty:1.05, unit:'nr', rate:120, up:126.00},
+      {name:'Clip/Fixing Units', type:'M', qty:1.05, unit:'nr', rate:18, up:18.90},
+    ]},
+  { ref:'AH', cat:'DRAINAGE', desc:'Extra over; 110mm uPVC bends', qty:25, unit:'nr', rate:116.13, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'General Labour', type:'L', qty:0.8, unit:'hr', rate:33, up:26.40},
+      {name:'Small Tools', type:'P', qty:0.8, unit:'hr', rate:5, up:4.00},
+      {name:'110mm uPVC Bend', type:'M', qty:1.05, unit:'nr', rate:28, up:29.40},
+      {name:'Clip/Fixing Units', type:'M', qty:1.05, unit:'nr', rate:18, up:18.90},
+    ]},
+  { ref:'AI', cat:'DRAINAGE', desc:'Extra over; 110mm uPVC end caps', qty:5, unit:'nr', rate:45.14, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.25, unit:'hr', rate:33, up:8.25},
+      {name:'General Labour', type:'L', qty:0.25, unit:'hr', rate:33, up:8.25},
+      {name:'Small Tools', type:'P', qty:0.25, unit:'hr', rate:5, up:1.25},
+      {name:'110mm End Cap', type:'M', qty:1.05, unit:'nr', rate:22, up:23.10},
+    ]},
+  { ref:'AJ', cat:'DRAINAGE', desc:'Cores; 100mm dia through concrete slab; work at weekends', qty:30, unit:'nr', rate:414.38, provisional:false,
+    resources:[
+      {name:'Coring Works', type:'S', qty:375, unit:'£', rate:1, up:375.00},
+    ]},
+  { ref:'AJ2', cat:'DRAINAGE', desc:'Waterproofing allowance at drainage cores — PROVISIONAL', qty:30, unit:'nr', rate:165.75, provisional:true,
+    resources:[
+      {name:'Coring Works', type:'S', qty:150, unit:'£', rate:1, up:150.00},
+    ]},
+  { ref:'AK', cat:'DRAINAGE', desc:'10mm SS slot drain; Kent Stainless Sideslot KSC125/200/100-10; grade 316; to basement drainage', qty:62, unit:'m', rate:214.39, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:0.5, unit:'hr', rate:33, up:16.50},
+      {name:'General Labour', type:'L', qty:0.5, unit:'hr', rate:33, up:16.50},
+      {name:'Small Tools', type:'P', qty:0.5, unit:'hr', rate:5, up:2.50},
+      {name:'Concrete', type:'M', qty:0.084, unit:'m3', rate:140, up:11.76},
+      {name:'Kent Slot Drain', type:'M', qty:1.05, unit:'m', rate:135, up:141.75},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+    ]},
+  { ref:'AL', cat:'DRAINAGE', desc:'Drain access covers; 300×200×100mm; grade 316 SS; pickled & passivated', qty:7, unit:'nr', rate:527.03, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'General Labour', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'Small Tools', type:'P', qty:2.0, unit:'hr', rate:5, up:10.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.084, unit:'m3', rate:300, up:25.20},
+      {name:'Kent Drainage', type:'M', qty:309.75, unit:'nr', rate:1, up:309.75},
+    ]},
+  { ref:'AM', cat:'DRAINAGE', desc:'Outlet points; 100mm grade 316 SS; pickled & passivated', qty:7, unit:'nr', rate:319.35, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'General Labour', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'Small Tools', type:'P', qty:2.0, unit:'hr', rate:5, up:10.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.0525, unit:'m3', rate:300, up:15.75},
+      {name:'Kent Drainage', type:'M', qty:131.25, unit:'nr', rate:1, up:131.25},
+    ]},
+  { ref:'AN', cat:'DRAINAGE', desc:'Access points; grade 316 SS; pickled & passivated', qty:7, unit:'nr', rate:380.84, provisional:false,
+    resources:[
+      {name:'Groundworker', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'General Labour', type:'L', qty:2.0, unit:'hr', rate:33, up:66.00},
+      {name:'Small Tools', type:'P', qty:2.0, unit:'hr', rate:5, up:10.00},
+      {name:'Concrete Hand Mix', type:'M', qty:0.063, unit:'m3', rate:300, up:18.90},
+      {name:'Kent Drainage', type:'M', qty:183.75, unit:'nr', rate:1, up:183.75},
+    ]},
+  { ref:'AN2', cat:'DRAINAGE', desc:'Recessed gully; detail to be confirmed — PROVISIONAL', qty:2, unit:'nr', rate:884.00, provisional:true,
+    resources:[
+      {name:'Coring Works', type:'S', qty:800, unit:'£', rate:1, up:800.00},
+    ]},
+  { ref:'AN3', cat:'DRAINAGE', desc:'Cut end of existing slot drain where new planter interferes — PROVISIONAL', qty:10, unit:'nr', rate:78.46, provisional:true,
+    resources:[
+      {name:'Groundworker', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'General Labour', type:'L', qty:1.0, unit:'hr', rate:33, up:33.00},
+      {name:'Small Tools', type:'P', qty:1.0, unit:'hr', rate:5, up:5.00},
+    ]},
+  { ref:'AO', cat:'DRAINAGE', desc:'Cutting paving for slot drain; saw cut, lift paving, re-lay paving; weekend work; incl. making good', qty:63, unit:'m', rate:171.59, provisional:false,
+    resources:[
+      {name:'Groundworker (saw)', type:'L', qty:0.35, unit:'hr', rate:33, up:11.55},
+      {name:'General Labour (saw)', type:'L', qty:0.35, unit:'hr', rate:33, up:11.55},
+      {name:'Diamond Saw Cutter', type:'P', qty:0.35, unit:'hr', rate:6, up:2.10},
+      {name:'Diamond Saw Blade', type:'M', qty:0.03, unit:'nr', rate:180, up:5.40},
+      {name:'Maylim Accommodation', type:'S', qty:5.0, unit:'£', rate:1, up:5.00},
+      {name:'Groundworker (lift)', type:'L', qty:0.5, unit:'hr', rate:33, up:16.50},
+      {name:'General Labour (lift)', type:'L', qty:0.5, unit:'hr', rate:33, up:16.50},
+      {name:'Small Tools', type:'P', qty:0.5, unit:'hr', rate:5, up:2.50},
+      {name:'Steintech Bedding Mortar', type:'M', qty:0.042, unit:'m3', rate:535, up:22.47},
+      {name:'Steintech Jointing Mortar', type:'M', qty:0.0011, unit:'m3', rate:1550, up:1.71},
+      {name:'Paving Install', type:'S', qty:60, unit:'£', rate:1, up:60.00},
+    ]},
+  { ref:'AP', cat:'DRAINAGE', desc:'Cores; 15mm dia; through concrete slab; irrigation — weekend work', qty:17, unit:'nr', rate:364.65, provisional:false,
+    resources:[
+      {name:'Coring Works', type:'S', qty:330, unit:'£', rate:1, up:330.00},
+    ]},
+  { ref:'AP2', cat:'DRAINAGE', desc:'Watermain core sealing; 15mm dia outlets; PROVISIONAL', qty:17, unit:'nr', rate:165.75, provisional:true,
+    resources:[
+      {name:'Coring Works', type:'S', qty:150, unit:'£', rate:1, up:150.00},
+    ]},
+
+  // ── ELECTRICAL
+  { ref:'AQ', cat:'ELECTRICAL', desc:'50mm SS conduit; fixed to basement soffit; main runs', qty:200, unit:'m', rate:59.17, provisional:false,
+    resources:[
+      {name:'MDN Cover Rate', type:'S', qty:49.55, unit:'£', rate:1, up:49.55},
+      {name:'Maylim Accommodation', type:'S', qty:4.0, unit:'£', rate:1, up:4.00},
+    ]},
+  { ref:'AR', cat:'ELECTRICAL', desc:'Wiring distribution; main runs', qty:200, unit:'m', rate:11.76, provisional:false,
+    resources:[
+      {name:'MDN Cover Rate', type:'S', qty:8.64, unit:'£', rate:1, up:8.64},
+      {name:'Maylim Accommodation', type:'S', qty:2.0, unit:'£', rate:1, up:2.00},
+    ]},
+  { ref:'AS', cat:'ELECTRICAL', desc:'50mm SS conduit; between planters', qty:57, unit:'m', rate:59.17, provisional:false,
+    resources:[
+      {name:'MDN Cover Rate', type:'S', qty:49.55, unit:'£', rate:1, up:49.55},
+      {name:'Maylim Accommodation', type:'S', qty:4.0, unit:'£', rate:1, up:4.00},
+    ]},
+  { ref:'AT', cat:'ELECTRICAL', desc:'Wiring distribution; between planters', qty:57, unit:'m', rate:11.76, provisional:false,
+    resources:[
+      {name:'MDN Cover Rate', type:'S', qty:8.64, unit:'£', rate:1, up:8.64},
+      {name:'Maylim Accommodation', type:'S', qty:2.0, unit:'£', rate:1, up:2.00},
+    ]},
+  { ref:'AV', cat:'ELECTRICAL', desc:'Wiring distribution; in planters', qty:149, unit:'m', rate:11.76, provisional:false,
+    resources:[
+      {name:'MDN Cover Rate', type:'S', qty:8.64, unit:'£', rate:1, up:8.64},
+      {name:'Maylim Accommodation', type:'S', qty:2.0, unit:'£', rate:1, up:2.00},
+    ]},
+  { ref:'AW', cat:'ELECTRICAL', desc:'LED drivers; in planters', qty:5, unit:'nr', rate:204.18, provisional:false,
+    resources:[
+      {name:'MDN Cover Rate', type:'S', qty:184.78, unit:'£', rate:1, up:184.78},
+    ]},
+  { ref:'AX', cat:'ELECTRICAL', desc:'LED Uplighters; Ago Garden (Lombardo); AC Direct LL126001; 3000K', qty:36, unit:'nr', rate:425.37, provisional:false,
+    resources:[
+      {name:'MDN Cover Rate', type:'S', qty:384.95, unit:'£', rate:1, up:384.95},
+    ]},
+  { ref:'AY', cat:'ELECTRICAL', desc:'Cores; 50mm dia through concrete slab; lighting; weekend work', qty:31, unit:'nr', rate:364.65, provisional:false,
+    resources:[
+      {name:'Coring Works', type:'S', qty:330, unit:'£', rate:1, up:330.00},
+    ]},
+  { ref:'AY2', cat:'ELECTRICAL', desc:'Sealing 50mm lighting cores in basement slab — PROVISIONAL', qty:31, unit:'nr', rate:165.75, provisional:true,
+    resources:[
+      {name:'Coring Works', type:'S', qty:150, unit:'£', rate:1, up:150.00},
+    ]},
+  { ref:'AZ', cat:'ELECTRICAL', desc:'Client Provisional Sum', qty:1, unit:'item', rate:90000, provisional:true,
+    resources:[
+      {name:'Provisional Sum', type:'S', qty:90000, unit:'£', rate:1, up:90000},
+    ]},
+];
+
+// ───────────────────────────────────────────────
+// COMPUTE & STATE
+// ───────────────────────────────────────────────
+let quantities = {};
+items.forEach(it => { quantities[it.ref] = it.qty; });
+
+function getOncost() {
+  return parseFloat(document.getElementById('oncost').value) || 0;
+}
+
+const GW_DAY_HRS = 9;
+
+function gwHrsPerUnit(item) {
+  const gw = item.resources.find(r => r.name.toLowerCase().includes('groundworker'));
+  return gw ? gw.qty : null;
+}
+
+function gwOutputPerDay(item) {
+  const hrs = gwHrsPerUnit(item);
+  if (!hrs || hrs === 0) return null;
+  return GW_DAY_HRS / hrs;
+}
+
+function labourHrs(item, qty) {
+  return item.resources
+    .filter(r => r.type === 'L')
+    .reduce((s, r) => s + r.qty * qty, 0);
+}
+
+function breakdown(item, qty) {
+  let L=0, P=0, M=0, S=0;
+  item.resources.forEach(r => {
+    const v = r.up * qty;
+    if(r.type==='L') L+=v;
+    else if(r.type==='P') P+=v;
+    else if(r.type==='M') M+=v;
+    else S+=v;
+  });
+  return {L,P,M,S};
+}
+
+function fmt(n) {
+  return '£' + n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+function fmt2(n) {
+  return '£' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+
+// ───────────────────────────────────────────────
+// CATEGORIES
+// ───────────────────────────────────────────────
+const CAT_COLORS = {
+  DEMOLITION:'#f06060', PLANTERS:'#c8f060', TIMBER:'#f0b060',
+  PAVING:'#60d4f0', CLAY:'#b060f0', DRAINAGE:'#60f0b0', ELECTRICAL:'#f06090'
+};
+const CAT_LABELS = {
+  DEMOLITION:'Demolition & Alterations', PLANTERS:'Planters',
+  TIMBER:'Timber Furniture', PAVING:'Paving', CLAY:'Clay Pots',
+  DRAINAGE:'Drainage', ELECTRICAL:'Electrical'
+};
+
+// ───────────────────────────────────────────────
+// RENDER
+// ───────────────────────────────────────────────
+let activeFilter = 'ALL';
+
+function renderSummary() {
+  const oncost = getOncost();
+  const grid = document.getElementById('summary-grid');
+  const cats = ['DEMOLITION','PLANTERS','TIMBER','PAVING','CLAY','DRAINAGE','ELECTRICAL'];
+  let html = '';
+  let grandNett = 0, grandGross = 0;
+  cats.forEach(cat => {
+    const catItems = items.filter(i => i.cat === cat);
+    const nett = catItems.reduce((s,i) => s + i.rate * quantities[i.ref], 0);
+    const gross = nett * (1 + oncost/100);
+    grandNett += nett; grandGross += gross;
+    html += `<div class="summary-card" onclick="filterCat('${cat}')">
+      <div class="cat-label">${CAT_LABELS[cat]}</div>
+      <div class="cat-value" style="color:${CAT_COLORS[cat]}">${fmt(nett)}</div>
+      <div class="cat-count">${catItems.length} items · gross ${fmt(gross)}</div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+  document.getElementById('grand-nett').textContent = fmt(grandNett);
+  document.getElementById('grand-gross').textContent = fmt(grandGross);
+}
+
+function filterCat(cat) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  renderItems();
+}
+
+function renderItems() {
+  const oncost = getOncost();
+  const search = document.getElementById('search').value.toLowerCase();
+  const container = document.getElementById('items-container');
+
+  const cats = activeFilter === 'ALL'
+    ? ['DEMOLITION','PLANTERS','TIMBER','PAVING','CLAY','DRAINAGE','ELECTRICAL']
+    : [activeFilter];
+
+  let html = '';
+  let anyItem = false;
+
+  cats.forEach(cat => {
+    const catItems = items.filter(i => {
+      if(i.cat !== cat) return false;
+      if(search && !i.desc.toLowerCase().includes(search) && !i.ref.toLowerCase().includes(search)) return false;
+      return true;
+    });
+    if(!catItems.length) return;
+    anyItem = true;
+
+    const catTotal = catItems.reduce((s,i) => s + i.rate * quantities[i.ref], 0);
+    html += `<div class="section-group">
+      <div class="section-group-title">
+        <span style="color:${CAT_COLORS[cat]}">▮</span> ${CAT_LABELS[cat]}
+        <span class="group-total">${fmt(catTotal)}</span>
+      </div>`;
+
+    catItems.forEach(item => {
+      const qty = quantities[item.ref];
+      const nett = item.rate * qty;
+      const gross = nett * (1 + oncost/100);
+      const hrs = labourHrs(item, qty);
+      const gwOut = gwOutputPerDay(item);
+      const gwHrs = gwHrsPerUnit(item);
+      const bd = breakdown(item, qty);
+      const total = bd.L + bd.P + bd.M + bd.S;
+      const maxW = 90;
+      const wL = total ? Math.round(bd.L/total*maxW) : 0;
+      const wP = total ? Math.round(bd.P/total*maxW) : 0;
+      const wM = total ? Math.round(bd.M/total*maxW) : 0;
+      const wS = Math.max(0, maxW - wL - wP - wM);
+
+      const provBadge = item.provisional ? '<span class="badge prov">prov</span>' : '';
+
+      html += `<div class="item-row${item.provisional?' provisional':''}" onclick="toggleExpand('${item.ref}')">
+        <div class="ref">${item.ref}</div>
+        <div class="desc">${item.desc}${provBadge}</div>
+        <div class="qty">
+          <input class="qty-edit" type="number" value="${qty}" min="0" data-ref="${item.ref}"
+            onclick="event.stopPropagation()" onchange="updateQty('${item.ref}', this.value)">
+          <div style="font-size:0.6rem;color:var(--muted);margin-top:1px">${item.unit}</div>
+        </div>
+        <div class="rate">${fmt2(item.rate)}</div>
+        <div class="nett">${fmt(nett)}</div>
+        <div class="gross">${fmt(gross)}</div>
+        <div class="rate" style="color:var(--labour)">${gwOut !== null ? gwOut.toFixed(1) + ' ' + item.unit + '/day' : '—'}</div>
+        <div class="bar-col">
+          <div class="mini-bar" style="background:var(--labour);width:${wL}px"></div>
+          <div class="mini-bar" style="background:var(--plant);width:${wP}px"></div>
+          <div class="mini-bar" style="background:var(--material);width:${wM}px"></div>
+          <div class="mini-bar" style="background:var(--subcon);width:${wS}px"></div>
+        </div>
+        <div style="font-size:1rem;color:var(--muted);text-align:center">▸</div>
+      </div>
+      <div class="expand-panel" id="exp-${item.ref.replace('*','s')}">
+        <table class="breakdown-table">
+          <thead><tr><th>Resource</th><th>Type</th><th>Qty/Unit</th><th>Rate</th><th>Unit Price</th><th>Total (×${qty})</th></tr></thead>
+          <tbody>
+            ${item.resources.map(r=>`<tr>
+              <td class="type-${r.type}">${r.name}</td>
+              <td class="type-${r.type}">${{L:'Labour',P:'Plant',M:'Material',S:'Subcon/Other'}[r.type]}</td>
+              <td>${r.qty} ${r.unit}</td>
+              <td>${fmt2(r.rate)}</td>
+              <td>${fmt2(r.up)}</td>
+              <td>${fmt(r.up * qty)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="breakdown-footer">
+          <div class="bf-item"><div class="bf-label">Labour</div><div class="bf-val" style="color:var(--labour)">${fmt(bd.L)}</div></div>
+          <div class="bf-item"><div class="bf-label">Plant</div><div class="bf-val" style="color:var(--plant)">${fmt(bd.P)}</div></div>
+          <div class="bf-item"><div class="bf-label">Material</div><div class="bf-val" style="color:var(--material)">${fmt(bd.M)}</div></div>
+          <div class="bf-item"><div class="bf-label">Subcon/Other</div><div class="bf-val" style="color:var(--subcon)">${fmt(bd.S)}</div></div>
+          <div class="bf-item"><div class="bf-label">Nett Total</div><div class="bf-val">${fmt(nett)}</div></div>
+          <div class="bf-item"><div class="bf-label">Gross (+${oncost}%)</div><div class="bf-val" style="color:var(--accent)">${fmt(gross)}</div></div>
+          <div class="bf-item"><div class="bf-label">GW Output/Day</div><div class="bf-val" style="color:var(--labour)">${gwOut !== null ? gwOut.toFixed(1) + ' ' + item.unit + '/day' : '—'}</div></div>
+          <div class="bf-item"><div class="bf-label">GW hrs/unit</div><div class="bf-val" style="color:var(--labour)">${gwHrs !== null ? gwHrs.toFixed(3) + ' hr' : '—'}</div></div>
+          <div class="bf-item"><div class="bf-label">Total Labour Hrs</div><div class="bf-val" style="color:var(--labour)">${hrs.toFixed(1)} hrs</div></div>
+        </div>
+      </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  if(!anyItem) html = '<div class="no-results">No items match your search.</div>';
+  container.innerHTML = html;
+}
+
+function toggleExpand(ref) {
+  const id = 'exp-' + ref.replace('*','s');
+  const el = document.getElementById(id);
+  if(el) el.classList.toggle('open');
+}
+
+function updateQty(ref, val) {
+  quantities[ref] = parseFloat(val) || 0;
+  renderSummary();
+  renderItems();
+}
+
+// ───────────────────────────────────────────────
+// EVENTS
+// ───────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeFilter = btn.dataset.cat;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderItems();
+  });
+});
+
+document.getElementById('search').addEventListener('input', renderItems);
+document.getElementById('oncost').addEventListener('input', () => {
+  renderSummary();
+  renderItems();
+});
+
+// INIT
+renderSummary();
+renderItems();
+</script>
+</body>
+</html>
